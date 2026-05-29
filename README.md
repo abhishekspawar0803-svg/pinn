@@ -121,14 +121,14 @@ That makes the repository a useful engineering project, not just a notebook with
 
 ```text
 .
-├── dataset/
-├── images/
+├── dataset/            # Synthetic training, validation, and test data
+├── images/             # Training curves, residual plots, and circuit visuals
 ├── .gitattributes
 ├── .gitignore
-├── PINN.ipynb
+├── PINN.ipynb          # Final comparative PINN vs baseline notebook
 ├── README.md
-├── circuit_pinn.png
-├── data_builder.ipynb
+├── circuit_pinn.png    # Circuit diagram asset
+├── data_builder.ipynb  # Synthetic dataset generation notebook
 └── requirements.txt
 ```
 
@@ -136,19 +136,31 @@ That makes the repository a useful engineering project, not just a notebook with
 
 ### Circuit setup and example data
 
+**Circuit PINN setup**
+
 ![Circuit PINN setup](images/circuit_pinn.png)
+
+**Example trajectory from the dataset**
 
 ![Example trajectory from the dataset](images/example_data_plot.png)
 
 ### Training loss comparison
 
+**Baseline training loss**
+
 ![Baseline training loss](images/baseline_train_loss.png)
+
+**Physics-informed training loss**
 
 ![Physics-informed training loss](images/physics_train_loss.png)
 
 ### Residual comparison
 
+**Baseline residual behavior**
+
 ![Baseline residual behavior](images/baseline_residual.png)
+
+**Physics-informed residual behavior**
 
 ![Physics-informed residual behavior](images/physics_residual.png)
 
