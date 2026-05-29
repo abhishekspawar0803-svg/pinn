@@ -1,57 +1,56 @@
 # Physics-Informed Neural Networks for Circuit Dynamics: A Comparative Analysis
 
-A PyTorch project comparing a physics-informed neural network (PINN) against a standard multilayer perceptron (MLP) for learning parallel RLC circuit dynamics from synthetic data.
+A PyTorch project comparing a standard multilayer perceptron (MLP) and a physics-informed neural network (PINN) for learning the dynamics of a parallel RLC circuit from synthetic data.
 
-This project studies a simple but important question: does adding circuit physics directly into the loss function improve prediction quality and physical consistency over a purely data-driven baseline?
+This repository is built around a simple research question: does adding circuit physics into the training objective improve prediction quality compared with a purely data-driven model?
 
 ## Project Overview
 
-The repository contains a controlled comparison between two models trained on the same synthetic parallel RLC dataset:
+The project presents a controlled comparison between two models trained on the same synthetic parallel RLC dataset:
 
-- **Baseline MLP** trained only with mean squared error
-- **PINN** trained with data loss plus physics-based residual penalties
+- **Baseline MLP** trained using supervised mean squared error
+- **PINN** trained using supervised loss plus physics-based residual penalties
 
-Both models use the same neural-network architecture, so the comparison focuses on the impact of physics regularization rather than differences in model capacity.
+Both models use the same feedforward architecture so that the comparison focuses on the impact of the loss formulation rather than model size.
 
-The final notebook uses:
+The final experiment uses:
 
 - **Inputs:** `time, R, L, C, vs`
 - **Outputs:** `IC, IL`
 - **Framework:** PyTorch
 - **Derivative computation:** `torch.autograd.grad`
 
-## Motivation
+## Why This Project Matters
 
-Physics-Informed Neural Networks are often presented as a superior alternative to purely data-driven models. In practice, that depends heavily on the regime.
+Physics-Informed Neural Networks are often presented as a more principled alternative to standard neural networks. But in practice, their usefulness depends on the data regime and the physical constraints being enforced.
 
-This project explores that question in a dense, noise-free synthetic setting generated from RLC circuit responses. Instead of assuming the PINN will perform better, the work evaluates both:
+This project is valuable because it does not assume that the PINN must perform better. Instead, it evaluates both models fairly on:
 
-1. Prediction accuracy
-2. Physical constraint satisfaction
+- predictive accuracy
+- physics consistency
+- training behavior
 
-The result is intentionally honest: in this setup, the plain baseline performed better.
+The final result is a meaningful negative result: in this setup, the standard baseline outperformed the PINN.
 
 ## Circuit Physics Used
 
-The PINN is regularized using circuit relationships from a parallel RLC formulation.
+The PINN incorporates circuit equations directly into the loss function.
 
-The physics loss enforces:
+The physics residuals are based on:
 
-- **Kirchhoff’s Current Law (KCL):**  
+- **Kirchhoff’s Current Law (KCL)**  
   \( i_C + i_L + i_R = 0 \)
 
-- **Capacitor relation:**  
+- **Capacitor relation**  
   \( i_C = C \frac{dv}{dt} \)
 
-The notebook computes derivatives through the network using autograd. From the predicted inductor current, it reconstructs voltage using the inductor relation and then differentiates again to form the capacitor residual.
-
-This makes the project more than a standard supervised-learning notebook: the circuit equations are translated directly into the training objective.
+Using autograd, the notebook differentiates network-derived quantities with respect to time to compute residual terms. This turns the model into more than a standard regressor; it becomes a constrained learning system informed by circuit behavior.
 
 ## Methodology
 
-### 1. Dataset generation
+### 1. Data generation
 
-A dense synthetic dataset of parallel RLC responses was generated across varying circuit parameters and source voltages. The uploaded data is included in the repository so the full experiment is reproducible.
+Synthetic trajectories were generated for a parallel RLC circuit over multiple parameter settings and source values. The dataset is included in the repository to keep the experiment reproducible.
 
 ### 2. Baseline model
 
@@ -65,20 +64,15 @@ A second model with the same architecture was trained using:
 - KCL residual loss
 - capacitor residual loss
 
-The physics weight was ramped gradually from a small value to a larger value during training instead of being applied at full strength from the start.
+The physics term was weighted progressively during training instead of applying full physics regularization from the beginning.
 
-### 4. Residual evaluation
+### 4. Residual analysis
 
-To evaluate whether the PINN actually respected the governing equations, the project reconstructs specific trajectories and measures:
-
-- mean absolute KCL residual
-- mean absolute capacitor residual
-
-This is important because a PINN should be judged on both fit quality and physics compliance.
+The project also evaluates whether the PINN actually improves physical consistency by examining residual behavior on trajectories, not just prediction error.
 
 ## Model Architecture
 
-Both the baseline and PINN use the same feedforward network:
+Both the baseline and PINN use the same network:
 
 - Linear(5 → 64)
 - Tanh
@@ -88,7 +82,7 @@ Both the baseline and PINN use the same feedforward network:
 - Tanh
 - Linear(15 → 2)
 
-This keeps the comparison fair: the main difference is the loss formulation, not the representational power of the model.
+This keeps the comparison fair and isolates the effect of physics-informed training.
 
 ## Final Result
 
@@ -97,82 +91,93 @@ In the final notebook run:
 - **Baseline test MSE:** `0.00015775408489086354`
 - **PINN test MSE:** `0.22964280067632595`
 
-The key result is a **negative result**:
+### Key takeaway
 
-- In this dense and noise-free regime, the baseline MLP achieved much better predictive accuracy.
-- The PINN introduced optimization difficulty and degraded the final fit.
-- This suggests that explicit physics regularization is not automatically beneficial when the training data is already abundant and clean.
+In this dense, noise-free synthetic setting, the baseline MLP achieved substantially better predictive accuracy than the PINN.
 
-That does **not** mean PINNs are useless. It means their value is regime-dependent. They are more compelling when data is sparse, noisy, partially observed, or when extrapolation matters more than interpolation.
+This suggests that explicit physics regularization is **not automatically beneficial** when the dataset is already rich and clean. In such settings, the additional residual constraints can make optimization harder and reduce predictive performance.
 
-## Engineering Takeaway
+This does not mean PINNs are ineffective in general. Their strengths are more likely to appear when:
 
-This project matters because it demonstrates:
+- data is sparse
+- measurements are noisy
+- some states are unobserved
+- extrapolation beyond the training regime is important
+
+## Engineering Takeaways
+
+This project demonstrates:
 
 - custom PyTorch training loops
 - autograd-based derivative computation inside the loss
-- translation of electrical-engineering equations into machine-learning objectives
-- fair baseline comparison
-- residual-based scientific evaluation
-- willingness to document a negative result instead of forcing a hype-driven conclusion
+- translation of electrical engineering equations into machine learning objectives
+- fair baseline comparison under a shared architecture
+- residual-based evaluation beyond plain test loss
+- honest reporting of a negative experimental result
 
-In other words, the project is not just about building a neural network. It is about testing whether a modeling idea actually helps.
+That makes the repository a useful engineering project, not just a notebook with plots.
 
 ## Repository Structure
 
 ```text
 .
-├── data/
+├── dataset/
 ├── images/
-├── PINN
-├── README
-├── requirements
-└── .gitignore
+├── .gitattributes
+├── .gitignore
+├── PINN.ipynb
+├── README.md
+├── circuit_pinn.png
+├── data_builder.ipynb
+└── requirements.txt
 ```
 
 ## Visuals
 
-### Circuit and sample data
+### Circuit setup and example data
 
 ![Circuit PINN setup](images/circuit_pinn.png)
+
 ![Example trajectory from the dataset](images/example_data_plot.png)
 
-### Training behavior
+### Training loss comparison
 
 ![Baseline training loss](images/baseline_train_loss.png)
+
 ![Physics-informed training loss](images/physics_train_loss.png)
 
-### Residual analysis
+### Residual comparison
 
 ![Baseline residual behavior](images/baseline_residual.png)
+
 ![Physics-informed residual behavior](images/physics_residual.png)
 
 ## How to Run
 
 1. Clone the repository.
-2. Install dependencies:
+2. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Launch Jupyter Notebook:
+3. Start Jupyter Notebook:
    ```bash
    jupyter notebook
    ```
-4. Open the project notebook and run the cells in order.
+4. Open `PINN.ipynb` and run the cells in order.
 
-## Possible Next Extensions
+## Possible Extensions
 
-Some natural follow-up directions for this project are:
+A few natural next steps for this project are:
 
-- testing the same setup under noisy data
-- reducing training-data density to study low-data behavior
-- evaluating extrapolation to unseen circuit parameters
-- tuning the physics-loss schedule
-- predicting additional states such as node voltage or resistor current
-- comparing against better-scaled or adaptive PINN formulations
+- test the same setup with noisy observations
+- reduce training-data density and study low-data behavior
+- evaluate extrapolation to unseen parameter ranges
+- tune the physics-loss weighting schedule
+- predict additional circuit variables such as voltage or resistor current
+- compare with alternative PINN formulations or adaptive weighting methods
 
 ## Summary
 
-This repository presents a comparative study of a standard MLP and a physics-informed neural network on parallel RLC circuit dynamics.
+This repository presents a comparative study of a standard MLP and a physics-informed neural network for parallel RLC circuit dynamics.
 
-The most important result is that the simpler baseline won in the final experiment. That negative result is the value of the project: it shows practical engineering judgment, not just implementation.
+The main result is intentionally honest: in the final experiment, the simpler baseline performed better. That negative result is part of the value of the project because it shows engineering judgment, rigorous comparison, and careful evaluation rather than hype-driven conclusions.
